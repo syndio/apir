@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 // ContentType is an http Content-Type value.
@@ -72,6 +75,14 @@ func SetClient(hc *http.Client) ClientOption {
 	}
 }
 
+// WithRetry sets the underlying *http.Client with one configured for automated retry.
+func WithRetry() ClientOption {
+	return func(c *Client) {
+		rc := retryablehttp.NewClient()
+		c.client = rc.StandardClient()
+	}
+}
+
 // NewClient creates a new Client with sane defaults and applies any given ClientOption methods.
 func NewClient(name string, options ...ClientOption) *Client {
 	c := &Client{
@@ -104,6 +115,11 @@ type Request struct {
 	req       *http.Request
 	api       *API
 	userAgent string
+}
+
+// URL returns the underlying *url.URL.
+func (r *Request) URL() *url.URL {
+	return r.req.URL
 }
 
 // RequestOption defines configuration options for a Request.
