@@ -78,7 +78,7 @@ func TestClientExecute(t *testing.T) {
 	t.Run("csv", func(t *testing.T) {
 		client := requester.NewClient("test")
 		client.MustAddAPI("testcsv", discoverer.NewDirect(csvServer.URL),
-			requester.SetContentType(requester.TextCSV))
+			requester.WithContentType(requester.TextCSV))
 
 		req, err := client.NewRequest(context.TODO(), "testcsv", http.MethodGet, "/", nil)
 		require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestClientExecute(t *testing.T) {
 	t.Run("json", func(t *testing.T) {
 		client := requester.NewClient("test")
 		client.MustAddAPI("testjson", discoverer.NewDirect(jsonServer.URL),
-			requester.SetContentType(requester.ApplicationJSON))
+			requester.WithContentType(requester.ApplicationJSON))
 
 		req, err := client.NewRequest(context.TODO(), "testjson", http.MethodGet, "/", nil)
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestClientExecute(t *testing.T) {
 	t.Run("json-with-retry", func(t *testing.T) {
 		client := requester.NewClient("test", requester.WithRetry())
 		client.MustAddAPI("testjson-retry", discoverer.NewDirect(failOnceServer.URL),
-			requester.SetContentType(requester.ApplicationJSON))
+			requester.WithContentType(requester.ApplicationJSON))
 
 		req, err := client.NewRequest(context.TODO(), "testjson-retry", http.MethodGet,
 			fmt.Sprintf("/%s", t.Name()), nil)

@@ -19,7 +19,9 @@ A simple package for making/consuming api[r] requests/responses.
 ```go
 client := requester.NewClient("myservice")
 client.MustAddAPI("otherservice", discoverer.NewDirect("http://foo.com/api"),
-		requester.SetContentType(requester.ApplicationJSON))
+	requester.WithRetry(),
+	requester.WithContentType(requester.ApplicationJSON),
+)
 ```
 
 ### Create a Request

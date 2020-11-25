@@ -51,8 +51,8 @@ type API struct {
 // APIOption defines configuration options for an API.
 type APIOption func(*API)
 
-// SetContentType sets the ContentType for an API.
-func SetContentType(ct ContentType) APIOption {
+// WithContentType sets the ContentType for an API.
+func WithContentType(ct ContentType) APIOption {
 	return func(api *API) {
 		api.contentType = ct
 	}
@@ -68,8 +68,8 @@ type Client struct {
 // ClientOption defines configuration options for a Client.
 type ClientOption func(*Client)
 
-// SetClient sets the underlying *http.Client for a Client.
-func SetClient(hc *http.Client) ClientOption {
+// WithClient sets the underlying *http.Client for a Client.
+func WithClient(hc *http.Client) ClientOption {
 	return func(c *Client) {
 		c.client = hc
 	}
@@ -125,8 +125,8 @@ func (r *Request) URL() *url.URL {
 // RequestOption defines configuration options for a Request.
 type RequestOption func(*Request)
 
-// SetUserAgent sets the user agent to be used on the Request.
-func SetUserAgent(ua string) RequestOption {
+// WithUserAgent sets the user agent to be used on the Request.
+func WithUserAgent(ua string) RequestOption {
 	return func(r *Request) {
 		r.userAgent = ua
 	}
@@ -150,7 +150,7 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 		req.Header.Set("Content-Type", api.contentType.String())
 	}
 
-	// set the default user agent (can be changed w/ the SetUserAgent option)
+	// set the default user agent (can be changed w/ the WithUserAgent option)
 	req.Header.Set("User-Agent", fmt.Sprintf("kpurdon/apir (for %s)", c.name))
 
 	r := &Request{req: req, api: api}
