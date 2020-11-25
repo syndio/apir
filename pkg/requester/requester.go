@@ -51,7 +51,7 @@ type API struct {
 // APIOption defines configuration options for an API.
 type APIOption func(*API)
 
-// WithContentType sets the ContentType for an API.
+// WithContentType sets the ContentType for an API. If not specified the default ApplicationJSON is used.
 func WithContentType(ct ContentType) APIOption {
 	return func(api *API) {
 		api.contentType = ct
@@ -115,6 +115,11 @@ func (c *Client) MustAddAPI(name string, discoverer Discoverer, options ...APIOp
 	api := &API{Discoverer: discoverer}
 	for _, option := range options {
 		option(api)
+	}
+
+	// if the WithContentType option was no applied ensure we set the default value of ApplicationJSON
+	if api.contentType == "" {
+		api.contentType = ApplicationJSON
 	}
 
 	c.apis[name] = api

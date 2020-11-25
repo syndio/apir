@@ -101,8 +101,7 @@ func TestClientExecute_CSV(t *testing.T) {
 
 func TestClientExecute_JSON(t *testing.T) {
 	client := requester.NewClient("test")
-	client.MustAddAPI("testjson", discoverer.NewDirect(jsonServer.URL),
-		requester.WithContentType(requester.ApplicationJSON))
+	client.MustAddAPI("testjson", discoverer.NewDirect(jsonServer.URL))
 
 	req, err := client.NewRequest(context.TODO(), "testjson", http.MethodGet, "/", nil)
 	require.NoError(t, err)
