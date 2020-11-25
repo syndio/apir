@@ -136,7 +136,7 @@ func TestClientExecute_Retry(t *testing.T) {
 	assert.True(t, ok)
 
 	assert.Equal(t, "red", data.Color)
-	assert.True(t, failOnceMap[req.URL().Path], "did not fail+retry")
+	assert.True(t, failOnceMap[req.URL.Path], "did not fail+retry")
 }
 
 func TestClientExecute_Timeout(t *testing.T) {

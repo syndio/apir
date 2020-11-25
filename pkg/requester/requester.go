@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -123,14 +122,9 @@ func (c *Client) MustAddAPI(name string, discoverer Discoverer, options ...APIOp
 
 // Request defines a http request to be made to an API.
 type Request struct {
-	req       *http.Request
 	api       *API
 	userAgent string
-}
-
-// URL returns the underlying *url.URL.
-func (r *Request) URL() *url.URL {
-	return r.req.URL
+	*http.Request
 }
 
 // RequestOption defines configuration options for a Request.
@@ -164,7 +158,7 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 	// set the default user agent (can be changed w/ the WithUserAgent option)
 	req.Header.Set("User-Agent", fmt.Sprintf("kpurdon/apir (for %s)", c.name))
 
-	r := &Request{req: req, api: api}
+	r := &Request{api: api, Request: req}
 	for _, option := range options {
 		option(r)
 	}
@@ -174,7 +168,7 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 
 // Execute makes the given Request optionally decoding the response into given successData and/or errorData. The bool value returned indicates if the request was made successfully or not regardless of the response.
 func (c *Client) Execute(req *Request, successData, errorData interface{}) (bool, error) {
-	resp, err := c.client.Do(req.req)
+	resp, err := c.client.Do(req.Request)
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
 	}
