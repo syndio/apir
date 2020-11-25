@@ -39,7 +39,7 @@ type Discoverer interface {
 // Requester defines an interface for creating and executing requests to an API.
 type Requester interface {
 	MustAddAPI(apiName string, discoverer Discoverer, options ...APIOption)
-	NewRequest(apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error)
+	NewRequest(ctx context.Context, apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error)
 	Execute(req *Request, successData, errorData interface{}) (bool, error)
 }
 
@@ -58,6 +58,9 @@ func WithContentType(ct ContentType) APIOption {
 		api.contentType = ct
 	}
 }
+
+// ensure Client implements Requester at compile time.
+var _ Requester = &Client{}
 
 // Client implements the Requester interface.
 type Client struct {
