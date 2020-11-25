@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/kpurdon/apir/pkg/discoverer"
 	"github.com/kpurdon/apir/pkg/requester"
@@ -19,6 +20,7 @@ import (
 var (
 	csvServer      *httptest.Server
 	jsonServer     *httptest.Server
+	timeoutServer  *httptest.Server
 	failOnceServer *httptest.Server
 	failOnceMap    = make(map[string]bool)
 )
@@ -36,6 +38,12 @@ func TestMain(m *testing.M) {
 		}
 	}))
 	defer jsonServer.Close()
+
+	timeoutServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(1 * time.Second)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer timeoutServer.Close()
 
 	failOnceServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var shouldFail bool
@@ -74,61 +82,76 @@ func TestClientNewRequest(t *testing.T) {
 	t.Skip("TODO")
 }
 
-func TestClientExecute(t *testing.T) {
-	t.Run("csv", func(t *testing.T) {
-		client := requester.NewClient("test")
-		client.MustAddAPI("testcsv", discoverer.NewDirect(csvServer.URL),
-			requester.WithContentType(requester.TextCSV))
+func TestClientExecute_CSV(t *testing.T) {
+	client := requester.NewClient("test")
+	client.MustAddAPI("testcsv", discoverer.NewDirect(csvServer.URL),
+		requester.WithContentType(requester.TextCSV))
 
-		req, err := client.NewRequest(context.TODO(), "testcsv", http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		assert.NotNil(t, req)
+	req, err := client.NewRequest(context.TODO(), "testcsv", http.MethodGet, "/", nil)
+	require.NoError(t, err)
+	assert.NotNil(t, req)
 
-		var data bytes.Buffer
-		ok, err := client.Execute(req, &data, nil)
-		require.NoError(t, err)
-		assert.True(t, ok)
+	var data bytes.Buffer
+	ok, err := client.Execute(req, &data, nil)
+	require.NoError(t, err)
+	assert.True(t, ok)
 
-		assert.Equal(t, "id,color\n1,red\n2,blue\n", data.String())
-	})
-	t.Run("json", func(t *testing.T) {
-		client := requester.NewClient("test")
-		client.MustAddAPI("testjson", discoverer.NewDirect(jsonServer.URL),
-			requester.WithContentType(requester.ApplicationJSON))
+	assert.Equal(t, "id,color\n1,red\n2,blue\n", data.String())
+}
 
-		req, err := client.NewRequest(context.TODO(), "testjson", http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		assert.NotNil(t, req)
+func TestClientExecute_JSON(t *testing.T) {
+	client := requester.NewClient("test")
+	client.MustAddAPI("testjson", discoverer.NewDirect(jsonServer.URL),
+		requester.WithContentType(requester.ApplicationJSON))
 
-		var data struct {
-			Color string `json:"color"`
-		}
-		ok, err := client.Execute(req, &data, nil)
-		require.NoError(t, err)
-		assert.True(t, ok)
+	req, err := client.NewRequest(context.TODO(), "testjson", http.MethodGet, "/", nil)
+	require.NoError(t, err)
+	assert.NotNil(t, req)
 
-		assert.Equal(t, "red", data.Color)
-	})
-	t.Run("json-with-retry", func(t *testing.T) {
-		client := requester.NewClient("test", requester.WithRetry())
-		client.MustAddAPI("testjson-retry", discoverer.NewDirect(failOnceServer.URL),
-			requester.WithContentType(requester.ApplicationJSON))
+	var data struct {
+		Color string `json:"color"`
+	}
+	ok, err := client.Execute(req, &data, nil)
+	require.NoError(t, err)
+	assert.True(t, ok)
 
-		req, err := client.NewRequest(context.TODO(), "testjson-retry", http.MethodGet,
-			fmt.Sprintf("/%s", t.Name()), nil)
-		require.NoError(t, err)
-		assert.NotNil(t, req)
+	assert.Equal(t, "red", data.Color)
+}
 
-		var data struct {
-			Color string `json:"color"`
-		}
-		ok, err := client.Execute(req, &data, nil)
-		require.NoError(t, err)
-		assert.True(t, ok)
+func TestClientExecute_Retry(t *testing.T) {
+	client := requester.NewClient("test", requester.WithRetry())
+	client.MustAddAPI("testjson-retry", discoverer.NewDirect(failOnceServer.URL),
+		requester.WithContentType(requester.ApplicationJSON))
 
-		assert.Equal(t, "red", data.Color)
-		assert.True(t, failOnceMap[req.URL().Path], "did not fail+retry")
-	})
+	req, err := client.NewRequest(context.TODO(), "testjson-retry", http.MethodGet,
+		fmt.Sprintf("/%s", t.Name()), nil)
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	var data struct {
+		Color string `json:"color"`
+	}
+	ok, err := client.Execute(req, &data, nil)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	assert.Equal(t, "red", data.Color)
+	assert.True(t, failOnceMap[req.URL().Path], "did not fail+retry")
+}
+
+func TestClientExecute_Timeout(t *testing.T) {
+	client := requester.NewClient("test", requester.WithTimeout(100*time.Millisecond))
+	client.MustAddAPI("timeout", discoverer.NewDirect(timeoutServer.URL),
+		requester.WithContentType(requester.ApplicationJSON))
+
+	req, err := client.NewRequest(context.TODO(), "timeout", http.MethodGet,
+		fmt.Sprintf("/%s", t.Name()), nil)
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	ok, err := client.Execute(req, nil, nil)
+	assert.Error(t, err)
+	assert.False(t, ok)
 }
 
 func TestRequestURL(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -68,18 +69,25 @@ type Client struct {
 // ClientOption defines configuration options for a Client.
 type ClientOption func(*Client)
 
-// WithClient sets the underlying *http.Client for a Client.
+// WithClient sets the underlying *http.Client for a Client. Replaces any existing *http.Client.
 func WithClient(hc *http.Client) ClientOption {
 	return func(c *Client) {
 		c.client = hc
 	}
 }
 
-// WithRetry sets the underlying *http.Client with one configured for automated retry.
+// WithRetry sets the underlying *http.Client with one configured for automated retry. Replaces any existing *http.Client.
 func WithRetry() ClientOption {
 	return func(c *Client) {
 		rc := retryablehttp.NewClient()
 		c.client = rc.StandardClient()
+	}
+}
+
+// WithTimeout sets the *http.Client.Timeout to the provided value. Be sure to call this after configuring any *http.Client (e.g. WithClient, WithRetry, ...).
+func WithTimeout(t time.Duration) ClientOption {
+	return func(c *Client) {
+		c.client.Timeout = t
 	}
 }
 
