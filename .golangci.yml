@@ -15,6 +15,7 @@ linters:
     - wsl
     - gomnd
     - nlreturn
+    - exhaustivestruct
 
 # dont use the default exclusions
 issues:

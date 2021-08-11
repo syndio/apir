@@ -10,8 +10,8 @@ var _ Requester = &MockClient{}
 
 // MockClient implements the Requester interface allowing for complete control over the returned values.
 type MockClient struct { //nolint:maligned
-	MustAddAPIFn       func(apiName string, discoverer Discoverer, options ...APIOption)
-	MustAddAPIFnCalled bool
+	AddAPIFn       func(apiName string, discoverer Discoverer, options ...APIOption) error
+	AddAPIFnCalled bool
 
 	NewRequestFn       func(ctx context.Context, apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error)
 	NewRequestFnCalled bool
@@ -20,10 +20,10 @@ type MockClient struct { //nolint:maligned
 	ExecuteFnCalled bool
 }
 
-// MustAddAPI implements the Requester.MustAddAPI method.
-func (m *MockClient) MustAddAPI(apiName string, discoverer Discoverer, options ...APIOption) {
-	m.MustAddAPIFnCalled = true
-	m.MustAddAPIFn(apiName, discoverer, options...)
+// AddAPI implements the Requester.MustAddAPI method.
+func (m *MockClient) AddAPI(apiName string, discoverer Discoverer, options ...APIOption) error {
+	m.AddAPIFnCalled = true
+	return m.AddAPIFn(apiName, discoverer, options...)
 }
 
 // NewRequest implements the Requester.NewRequest method.

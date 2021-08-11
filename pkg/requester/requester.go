@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -37,12 +38,12 @@ type Discoverer interface {
 
 // Requester defines an interface for creating and executing requests to an API.
 type Requester interface {
-	MustAddAPI(apiName string, discoverer Discoverer, options ...APIOption)
+	AddAPI(apiName string, discoverer Discoverer, options ...APIOption) error
 	NewRequest(ctx context.Context, apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error)
 	Execute(req *Request, successData, errorData interface{}) (bool, error)
 }
 
-// API defines an API and is embedded in a Client via MustAddAPI.
+// API defines an API and is embedded in a Client via AddAPI.
 type API struct {
 	Discoverer
 	contentType ContentType
@@ -106,10 +107,15 @@ func NewClient(name string, options ...ClientOption) *Client {
 	return c
 }
 
-// MustAddAPI adds an API with the given name and Discover to the Client applying any given APIOption methods.
-func (c *Client) MustAddAPI(name string, discoverer Discoverer, options ...APIOption) {
+// AddAPI adds an API with the given name and Discover to the Client applying any given APIOption methods.
+func (c *Client) AddAPI(name string, discoverer Discoverer, options ...APIOption) error {
 	if _, ok := c.apis[name]; ok {
-		panic(fmt.Sprintf("api %q already initialized", name))
+		return fmt.Errorf("api %q already initialized", name)
+	}
+
+	_, err := url.Parse(discoverer.URL())
+	if err != nil {
+		return fmt.Errorf("discoverer does not return a valid url: %w", err)
 	}
 
 	api := &API{Discoverer: discoverer}
@@ -123,6 +129,8 @@ func (c *Client) MustAddAPI(name string, discoverer Discoverer, options ...APIOp
 	}
 
 	c.apis[name] = api
+
+	return nil
 }
 
 // Request defines a http request to be made to an API.
@@ -177,12 +185,7 @@ func (c *Client) Execute(req *Request, successData, errorData interface{}) (bool
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
 	}
-	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			fmt.Printf("error closing response body: %+v", err)
-		}
-	}()
+	defer resp.Body.Close() // nolint:errcheck
 
 	var ok bool
 	switch req.api.contentType {
