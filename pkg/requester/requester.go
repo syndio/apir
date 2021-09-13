@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 // ContentType is an http Content-Type value.
@@ -64,13 +65,21 @@ var _ Requester = &Client{}
 
 // Client implements the Requester interface.
 type Client struct {
-	name   string
-	client *http.Client
-	apis   map[string]*API
+	name    string
+	client  *http.Client
+	apis    map[string]*API
+	datadog bool
 }
 
 // ClientOption defines configuration options for a Client.
 type ClientOption func(*Client)
+
+// WithDatadog ensures the underlying *http.Client is wrapped with datadog tracing when executing requests.
+func WithDatadog() ClientOption {
+	return func(c *Client) {
+		c.datadog = true
+	}
+}
 
 // WithClient sets the underlying *http.Client for a Client. Replaces any existing *http.Client.
 func WithClient(hc *http.Client) ClientOption {
@@ -79,10 +88,16 @@ func WithClient(hc *http.Client) ClientOption {
 	}
 }
 
+type noopLogger struct{}
+
+// Printf satisfies the go-retryablehttp.Logger interface.
+func (l noopLogger) Printf(string, ...interface{}) {}
+
 // WithRetry sets the underlying *http.Client with one configured for automated retry. Replaces any existing *http.Client.
 func WithRetry() ClientOption {
 	return func(c *Client) {
 		rc := retryablehttp.NewClient()
+		rc.Logger = new(noopLogger) // TODO: accept a logger (just disabled for now)
 		c.client = rc.StandardClient()
 	}
 }
@@ -181,6 +196,10 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 
 // Execute makes the given Request optionally decoding the response into given successData and/or errorData. The bool value returned indicates if the request was made successfully or not regardless of the response.
 func (c *Client) Execute(req *Request, successData, errorData interface{}) (bool, error) {
+	if c.datadog {
+		c.client = httptrace.WrapClient(c.client)
+	}
+
 	resp, err := c.client.Do(req.Request)
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
