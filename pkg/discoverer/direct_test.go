@@ -3,9 +3,9 @@ package discoverer_test
 import (
 	"testing"
 
-	"github.com/kpurdon/apir/pkg/discoverer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/syndio/apir/pkg/discoverer"
 )
 
 func TestNewDirect(t *testing.T) {

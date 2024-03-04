@@ -1,8 +1,3 @@
-![go](https://github.com/kpurdon/apir/workflows/go/badge.svg)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/kpurdon/apir)](https://pkg.go.dev/github.com/kpurdon/apir)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kpurdon/apir)](https://goreportcard.com/report/github.com/kpurdon/apir)
-[![codecov](https://codecov.io/gh/kpurdon/apir/branch/main/graph/badge.svg?token=XA8RTRD2SU)](https://codecov.io/gh/kpurdon/apir)
-
 apir
 -----
 
@@ -10,7 +5,7 @@ A simple package for making/consuming api[r] requests/responses.
 
 ## Installation
 
-`go get github.com/kpurdon/apir`
+`go get github.com/syndio/apir`
 
 ## Getting Started
 

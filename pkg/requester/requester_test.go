@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kpurdon/apir/pkg/discoverer"
-	"github.com/kpurdon/apir/pkg/requester"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/syndio/apir/pkg/discoverer"
+	"github.com/syndio/apir/pkg/requester"
 )
 
 var (
@@ -26,12 +26,14 @@ func testHandler(w http.ResponseWriter, r *http.Request) { //nolint:cyclop
 	switch r.URL.Query().Get("test") {
 	case "file-csv":
 		http.ServeFile(w, r, path.Join("files", "test.csv"))
+
 		return
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
 		if _, err := w.Write([]byte(`{"color":"red"}`)); err != nil {
 			panic(err)
 		}
+
 		return
 	case "json-error":
 		w.Header().Set("Content-Type", "application/json")
@@ -39,10 +41,12 @@ func testHandler(w http.ResponseWriter, r *http.Request) { //nolint:cyclop
 		if _, err := w.Write([]byte(`{"message":"bad"}`)); err != nil {
 			panic(err)
 		}
+
 		return
 	case "timeout":
 		time.Sleep(1 * time.Second)
 		w.WriteHeader(http.StatusOK)
+
 		return
 	case "retry":
 		var shouldFail bool
@@ -59,6 +63,7 @@ func testHandler(w http.ResponseWriter, r *http.Request) { //nolint:cyclop
 		if _, err := w.Write([]byte(`{"color":"red"}`)); err != nil {
 			panic(err)
 		}
+
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
@@ -85,9 +90,14 @@ func TestClientAddAPI(t *testing.T) {
 	t.Parallel()
 	client := requester.NewClient("test")
 	require.NotNil(t, client)
-	assert.NoError(t, client.AddAPI("test", discoverer.NewDirect(ts.URL)))
-	assert.Error(t, client.AddAPI("test", discoverer.NewDirect(ts.URL)), "cannot add the same api twice")
-	assert.Error(t, client.AddAPI("test-bad-url", discoverer.NewDirect("http://user:}{@foo.com")), "discoverer must return a valid url")
+	require.NoError(t, client.AddAPI("test", discoverer.NewDirect(ts.URL)))
+	require.Error(t, client.AddAPI("test", discoverer.NewDirect(ts.URL)), "cannot add the same api twice")
+	require.Error(
+		t,
+		client.AddAPI(
+			"test-bad-url",
+			discoverer.NewDirect("http://user:}{@foo.com")),
+		"discoverer must return a valid url")
 }
 
 func TestClientNewRequest(t *testing.T) {
@@ -98,11 +108,11 @@ func TestClientNewRequest(t *testing.T) {
 
 	req, err := client.NewRequest(context.TODO(), "not-test", http.MethodGet, "", nil)
 	assert.Nil(t, req)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	req, err = client.NewRequest(context.TODO(), "test", http.MethodGet, "", nil)
 	assert.NotNil(t, req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestClientExecute_CSV(t *testing.T) {
@@ -204,7 +214,7 @@ func TestClientExecute_Retry(t *testing.T) {
 		Color string `json:"color"`
 	}
 	ok, err := client.Execute(req, &data, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, ok)
 
 	assert.Equal(t, "red", data.Color)
@@ -223,6 +233,6 @@ func TestClientExecute_Timeout(t *testing.T) {
 	require.NotNil(t, req)
 
 	ok, err := client.Execute(req, nil, nil)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.False(t, ok)
 }

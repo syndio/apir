@@ -3,19 +3,37 @@ linters-settings:
     check-shadowing: true
   misspell:
     locale: US
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - github.com/syndio/apir/pkg/discoverer
+          - github.com/syndio/apir/pkg/requester
+          - github.com/hashicorp/go-retryablehttp
+          - github.com/stretchr/testify
+          - gopkg.in/DataDog/dd-trace-go.v1
+  varnamelen:
+    ignore-type-assert-ok: true
+    ignore-decls:
+      - c *Client
+      - ts *httptest.Server
+      - r *http.Request
+      - w http.ResponseWriter
+      - ok bool
 
 linters:
   enable-all: true
   disable:
-    - gofumpt
+    - exhaustruct
+    - exhaustivestruct
+    - gochecknoglobals
     - godox
     - goerr113
-    - lll
-    - gochecknoglobals
-    - wsl
+    - gofumpt
     - gomnd
-    - nlreturn
-    - exhaustivestruct
+    - wsl
+    - unparam                   # panics
 
 # dont use the default exclusions
 issues:

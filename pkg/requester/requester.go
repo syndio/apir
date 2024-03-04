@@ -40,7 +40,13 @@ type Discoverer interface {
 // Requester defines an interface for creating and executing requests to an API.
 type Requester interface {
 	AddAPI(apiName string, discoverer Discoverer, options ...APIOption) error
-	NewRequest(ctx context.Context, apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error)
+	NewRequest(
+		ctx context.Context,
+		apiName,
+		method,
+		url string,
+		body io.Reader,
+		options ...RequestOption) (*Request, error)
 	Execute(req *Request, successData, errorData interface{}) (bool, error)
 }
 
@@ -93,7 +99,8 @@ type noopLogger struct{}
 // Printf satisfies the go-retryablehttp.Logger interface.
 func (l noopLogger) Printf(string, ...interface{}) {}
 
-// WithRetry sets the underlying *http.Client with one configured for automated retry. Replaces any existing *http.Client.
+// WithRetry sets the underlying *http.Client with one configured for
+// automated retry. Replaces any existing *http.Client.
 func WithRetry() ClientOption {
 	return func(c *Client) {
 		rc := retryablehttp.NewClient()
@@ -102,7 +109,9 @@ func WithRetry() ClientOption {
 	}
 }
 
-// WithTimeout sets the *http.Client.Timeout to the provided value. Be sure to call this after configuring any *http.Client (e.g. WithClient, WithRetry, ...).
+// WithTimeout sets the *http.Client.Timeout to the provided value. Be
+// sure to call this after configuring any *http.Client
+// (e.g. WithClient, WithRetry, ...).
 func WithTimeout(t time.Duration) ClientOption {
 	return func(c *Client) {
 		c.client.Timeout = t
@@ -119,6 +128,7 @@ func NewClient(name string, options ...ClientOption) *Client {
 	for _, option := range options {
 		option(c)
 	}
+
 	return c
 }
 
@@ -165,8 +175,15 @@ func WithUserAgent(ua string) RequestOption {
 	}
 }
 
-// NewRequest creates a new Request for the given inputs applying any given RequestOption methods.
-func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, body io.Reader, options ...RequestOption) (*Request, error) {
+// NewRequest creates a new Request for the given inputs applying any
+// given RequestOption methods.
+func (c *Client) NewRequest(
+	_ context.Context,
+	apiName,
+	method,
+	url string,
+	body io.Reader,
+	options ...RequestOption) (*Request, error) {
 	api, ok := c.apis[apiName]
 	if !ok {
 		return nil, fmt.Errorf("api %q not initialized", apiName)
@@ -184,7 +201,7 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 	}
 
 	// set the default user agent (can be changed w/ the WithUserAgent option)
-	req.Header.Set("User-Agent", fmt.Sprintf("kpurdon/apir (for %s)", c.name))
+	req.Header.Set("User-Agent", fmt.Sprintf("syndio/apir (for %s)", c.name))
 
 	r := &Request{api: api, Request: req}
 	for _, option := range options {
@@ -194,7 +211,10 @@ func (c *Client) NewRequest(ctx context.Context, apiName, method, url string, bo
 	return r, nil
 }
 
-// Execute makes the given Request optionally decoding the response into given successData and/or errorData. The bool value returned indicates if the request was made successfully or not regardless of the response.
+// Execute makes the given Request optionally decoding the response
+// into given successData and/or errorData. The bool value returned
+// indicates if the request was made successfully or not regardless of
+// the response.
 func (c *Client) Execute(req *Request, successData, errorData interface{}) (bool, error) {
 	if c.datadog {
 		c.client = httptrace.WrapClient(c.client)
@@ -204,7 +224,7 @@ func (c *Client) Execute(req *Request, successData, errorData interface{}) (bool
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
 	}
-	defer resp.Body.Close() // nolint:errcheck
+	defer resp.Body.Close() //nolint:errcheck
 
 	var ok bool
 	switch req.api.contentType {
@@ -226,6 +246,7 @@ func decodeJSON(resp *http.Response, successData, errorData interface{}) (bool, 
 			if err := json.NewDecoder(resp.Body).Decode(&errorData); err != nil {
 				return false, fmt.Errorf("decoding errorData: %w", err)
 			}
+
 			return false, nil
 		}
 		// TODO: better error situation here
@@ -236,6 +257,7 @@ func decodeJSON(resp *http.Response, successData, errorData interface{}) (bool, 
 			return true, fmt.Errorf("decoding successData: %w", err)
 		}
 	}
+
 	return true, nil
 }
 
@@ -252,5 +274,6 @@ func decodeFile(resp *http.Response, successData interface{}) (bool, error) {
 			return true, fmt.Errorf("copying resp.Body to successData: %w", err)
 		}
 	}
+
 	return true, nil
 }
