@@ -14,7 +14,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.48.1 // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
 	github.com/DataDog/go-libddwaf/v2 v2.3.1 // indirect
-	github.com/DataDog/go-sqllexer v0.0.9 // indirect
+	github.com/DataDog/go-sqllexer v0.0.11 // indirect
 	github.com/DataDog/go-tuf v1.0.4-0.5.2 // indirect
 	github.com/DataDog/sketches-go v1.4.4 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
