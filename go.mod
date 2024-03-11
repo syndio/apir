@@ -22,7 +22,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgrijalva/lfu-go v0.0.0-20141010002404-f174e76c5138 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ebitengine/purego v0.6.0-alpha.5 // indirect
+	github.com/ebitengine/purego v0.7.0-alpha.3 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.1 // indirect
