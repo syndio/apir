@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/stretchr/testify v1.9.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.61.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.62.0
 )
 
 require (
